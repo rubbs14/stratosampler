@@ -1,0 +1,26 @@
+[project]
+name = "stratosampler"
+description = "Stratified molecular dataset splitting for QSAR model development"
+version = "0.1.0"
+homepage = "https://github.com/rubbs14/stratosampler"
+repository = "https://github.com/rubbs14/stratosampler"
+
+[build]
+output_dir = "docs"
+search = true
+
+[[modules]]
+path = "stratosampler"
+include_private = false
+
+[[pages]]
+title = "Home"
+path = "README.md"
+
+[[pages]]
+title = "API Reference"
+auto_generated = true
+
+[theme]
+dark = true
+accent_color = "#2E7D32"

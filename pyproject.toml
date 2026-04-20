@@ -1,0 +1,54 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "stratosampler"
+version = "0.1.0"
+description = "Stratified molecular dataset splitting for QSAR model development"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Roberto Fino", email = "roberto.fino84@gmail.com" }]
+keywords = [
+    "cheminformatics", "QSAR", "drug discovery", "machine learning",
+    "stratified sampling", "molecular datasets", "RDKit",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Chemistry",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+requires-python = ">=3.9"
+dependencies = [
+    "numpy>=1.23",
+    "pandas>=1.5",
+    "scikit-learn>=1.1",
+    "scipy>=1.9",
+    "matplotlib>=3.6",
+]
+
+[project.optional-dependencies]
+rdkit = ["rdkit>=2022.03"]
+dev   = ["pytest", "pytest-cov", "black", "ruff", "jupyter"]
+docs  = ["properdocs>=1.6.0", "properdocs-theme-mkdocs>=1.6.0"]
+
+[project.urls]
+Homepage   = "https://github.com/rubbs14/stratosampler"
+Repository = "https://github.com/rubbs14/stratosampler"
+Issues     = "https://github.com/rubbs14/stratosampler/issues"
+
+[tool.setuptools.packages.find]
+where = ["."]
+
+[tool.black]
+line-length = 88
+
+[tool.ruff]
+line-length = 88
+select = ["E", "F", "W"]

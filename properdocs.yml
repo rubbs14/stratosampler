@@ -1,0 +1,24 @@
+site_name: stratosampler
+site_description: Stratified molecular dataset splitting for QSAR model development
+site_author: Roberto Fino
+repo_url: https://github.com/rubbs14/stratosampler
+repo_name: stratosampler
+edit_uri: edit/main/docs/
+
+theme: mkdocs
+
+docs_dir: docs
+site_dir: site
+
+plugins:
+  - search
+
+nav:
+  - Home: index.md
+  - Getting Started: getting_started.md
+  - API Reference: api.md
+  - Examples: examples.md
+
+markdown_extensions:
+  - toc:
+      permalink: true
