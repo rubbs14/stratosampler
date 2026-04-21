@@ -114,6 +114,7 @@ def coverage_score(
     train and test sets. A score of 1.0 means all strata are represented
     in both splits — ideal for QSAR applicability domain coverage.
     """
+    strata = np.asarray(strata)
     all_strata   = set(np.unique(strata))
     train_strata = set(np.unique(strata[train_idx]))
     test_strata  = set(np.unique(strata[test_idx]))
