@@ -37,7 +37,7 @@ jobs:
         run: uv sync --extra docs
 
       - name: Build documentation
-        run: properdocs build
+        run: uv run properdocs build
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
