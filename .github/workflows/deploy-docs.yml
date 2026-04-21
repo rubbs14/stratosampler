@@ -17,6 +17,7 @@ jobs:
       contents: read
       pages: write
       id-token: write
+      actions: write
 
     steps:
       - uses: actions/checkout@v4
@@ -38,6 +39,24 @@ jobs:
 
       - name: Build documentation
         run: uv run properdocs build
+
+      - name: Delete stale github-pages artifacts
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const artifacts = await github.rest.actions.listArtifactsForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              name: 'github-pages',
+              per_page: 100,
+            });
+            for (const artifact of artifacts.data.artifacts) {
+              await github.rest.actions.deleteArtifact({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                artifact_id: artifact.id,
+              });
+            }
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
