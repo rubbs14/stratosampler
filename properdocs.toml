@@ -6,7 +6,7 @@ homepage = "https://github.com/rubbs14/stratosampler"
 repository = "https://github.com/rubbs14/stratosampler"
 
 [build]
-output_dir = "docs"
+output_dir = "site"
 search = true
 
 [[modules]]
@@ -18,8 +18,16 @@ title = "Home"
 path = "README.md"
 
 [[pages]]
+title = "Getting Started"
+path = "docs/getting_started.md"
+
+[[pages]]
+title = "Examples"
+path = "docs/examples.md"
+
+[[pages]]
 title = "API Reference"
-auto_generated = true
+path = "docs/api.md"
 
 [theme]
 dark = true
