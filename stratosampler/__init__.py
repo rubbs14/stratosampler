@@ -40,7 +40,7 @@ from stratosampler.IO import (
     SdfLoader,
 )
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 __author__ = "Roberto Fino"
 __all__ = [
     "PropertyStratifiedSplitter",

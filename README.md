@@ -1,6 +1,6 @@
 # stratosampler
 
-![stratosampler](assets/logo.png)
+![stratosampler](https://raw.githubusercontent.com/rubbs14/stratosampler/main/assets/logo.png)
 
 **Stratified molecular dataset splitting for QSAR model development.**
 
@@ -181,7 +181,7 @@ records from ChEMBL, clusters them into chemical series via Murcko scaffold
 analysis, then draws a stratified sample across every **(series × pIC50 range)**
 stratum — guaranteeing at least 5 representatives per series.
 
-![EGFR stratified sample](examples/egfr_stratified_sample_plot.png)
+![EGFR stratified sample](https://raw.githubusercontent.com/rubbs14/stratosampler/main/examples/egfr_stratified_sample_plot.png)
 
 Grey dots are the full population; coloured circles are the 103 sampled
 compounds (28.5%), one colour per scaffold series. Dashed lines mark pIC50
