@@ -1,168 +1,128 @@
 # Examples
 
-## Basic Molecular Dataset Split
+---
 
-### Example 1: Simple QSAR Dataset Split
+## 1. Basic stratified split
 
 ```python
 import pandas as pd
-from stratosampler import PropertyStratifiedSplitter
-from stratosampler.metrics import calculate_distribution_metrics
+from stratosampler import PropertyStratifiedSplitter, compute_properties, split_summary
 
-# Load data
-df = pd.read_csv("qsar_data.csv")
-X = df[["SMILES", "MolLogP", "MolWt", "TPSA"]]
-y = df["activity"]
+df = pd.read_csv("qsar_data.csv")  # must have a "SMILES" column
 
-# Create splitter
 splitter = PropertyStratifiedSplitter(
     properties=["MolLogP", "MolWt", "TPSA"],
     n_bins=5,
     test_size=0.2,
-    random_state=42
+    random_state=42,
+)
+train_idx, test_idx = splitter.split(df, smiles_col="SMILES")
+
+# Compute properties for metrics
+props = ["MolLogP", "MolWt", "TPSA"]
+prop_df = compute_properties(df["SMILES"], props)
+df = pd.concat([df, prop_df], axis=1)
+
+summary = split_summary(df, train_idx, test_idx, props)
+print(f"Train: {summary['n_train']}  Test: {summary['n_test']}")
+print(f"Mean KS:  {summary['mean_ks_stat']:.3f}")
+print(f"Mean JSD: {summary['mean_js_div']:.3f}")
+```
+
+---
+
+## 2. Compare random vs stratified vs scaffold-aware
+
+```python
+import numpy as np
+from stratosampler import (
+    PropertyStratifiedSplitter,
+    split_summary,
+    plot_split_comparison,
 )
 
-# Perform split
-X_train, X_test, y_train, y_test = splitter.split(X, y=y)
-
-# Validate split quality
-metrics = calculate_distribution_metrics(X_train, X_test, y_train, y_test)
-print(f"KS Statistic: {metrics['ks_statistic']:.4f}")
-print(f"AD Statistic: {metrics['ad_statistic']:.4f}")
-```
-
-## Cross-Validation with Stratification
-
-### Example 2: K-Fold Stratified Cross-Validation
-
-```python
-from sklearn.model_selection import cross_val_score
-from sklearn.ensemble import RandomForestRegressor
-from stratosampler import PropertyStratifiedSplitter
-
-# Initialize model
-model = RandomForestRegressor(random_state=42)
-
-# Create stratified splitter
-splitter = PropertyStratifiedSplitter(
-    properties=["MolLogP", "MolWt"],
-    n_bins=5,
-    test_size=0.2
-)
-
-# Perform stratified split
-X_train, X_test, y_train, y_test = splitter.split(X, y=y)
-
-# Train model
-model.fit(X_train, y_train)
-
-# Evaluate
-train_score = model.score(X_train, y_train)
-test_score = model.score(X_test, y_test)
-
-print(f"Train R²: {train_score:.4f}")
-print(f"Test R²: {test_score:.4f}")
-```
-
-## Visualization of Splits
-
-### Example 3: Plotting Distribution Comparison
-
-```python
-import matplotlib.pyplot as plt
-from stratosampler.visualisation import plot_distribution_comparison
-
-# Create the split
-X_train, X_test, y_train, y_test = splitter.split(X, y=y)
-
-# Plot comparison
-fig, axes = plt.subplots(1, 3, figsize=(15, 4))
-plot_distribution_comparison(X_train, X_test)
-plt.tight_layout()
-plt.show()
-```
-
-## Comparing Stratified vs Random Splits
-
-### Example 4: Quality Comparison
-
-```python
-from sklearn.model_selection import train_test_split
-from stratosampler.metrics import calculate_distribution_metrics
+props = ["MolLogP", "MolWt", "TPSA"]
 
 # Random split
-X_train_random, X_test_random, y_train_r, y_test_r = train_test_split(
-    X, y, test_size=0.2, random_state=42
-)
+rng = np.random.default_rng(42)
+idx = np.arange(len(df))
+rng.shuffle(idx)
+n_test = int(0.2 * len(df))
+random_results = split_summary(df, idx[n_test:], idx[:n_test], props)
 
 # Stratified split
+strat = PropertyStratifiedSplitter(test_size=0.2, random_state=42)
+tr, te = strat.split(df, smiles_col="SMILES")
+strat_results = split_summary(df, tr, te, props)
+
+# Scaffold-aware stratified split
+sc = PropertyStratifiedSplitter(test_size=0.2, scaffold_aware=True, random_state=42)
+sc_tr, sc_te = sc.split(df, smiles_col="SMILES")
+sc_results = split_summary(df, sc_tr, sc_te, props)
+
+fig = plot_split_comparison(
+    {"random": random_results, "stratified": strat_results, "scaffold+strat": sc_results},
+    props,
+    metric="ks_stat",
+)
+fig.savefig("strategy_comparison.png", dpi=150, bbox_inches="tight")
+```
+
+---
+
+## 3. Visualise property distributions
+
+```python
+from stratosampler import plot_property_distributions
+
+fig = plot_property_distributions(df, train_idx, test_idx, props)
+fig.savefig("distributions.png", dpi=150, bbox_inches="tight")
+```
+
+---
+
+## 4. Chemical space scatter
+
+```python
+from stratosampler import plot_chemical_space
+
+fig = plot_chemical_space(df, train_idx, test_idx, x_col="MolLogP", y_col="MolWt")
+fig.savefig("chemical_space.png", dpi=150, bbox_inches="tight")
+```
+
+---
+
+## 5. Three-way split with validation set
+
+```python
 splitter = PropertyStratifiedSplitter(
     properties=["MolLogP", "MolWt", "TPSA"],
-    n_bins=5,
-    test_size=0.2,
-    random_state=42
+    test_size=0.1,
+    val_size=0.1,
+    random_state=42,
 )
-X_train_strat, X_test_strat, y_train_s, y_test_s = splitter.split(X, y=y)
+train_idx, val_idx, test_idx = splitter.split(df, smiles_col="SMILES")
 
-# Compare metrics
-random_metrics = calculate_distribution_metrics(
-    X_train_random, X_test_random, y_train_r, y_test_r
-)
-strat_metrics = calculate_distribution_metrics(
-    X_train_strat, X_test_strat, y_train_s, y_test_s
-)
-
-print("Random Split KS Statistic:", random_metrics["ks_statistic"])
-print("Stratified Split KS Statistic:", strat_metrics["ks_statistic"])
+summary = split_summary(df, train_idx, test_idx, props, val_idx=val_idx)
+print(f"Train: {summary['n_train']}  Val: {summary['n_val']}  Test: {summary['n_test']}")
 ```
 
-## Multi-Property Stratification
+---
 
-### Example 5: Advanced Configuration
-
-```python
-# Stratify on multiple chemical properties
-properties = [
-    "MolLogP",      # Lipophilicity
-    "MolWt",        # Molecular weight
-    "TPSA",         # Topological polar surface area
-    "NumHBD",       # Hydrogen bond donors
-    "NumHBA",       # Hydrogen bond acceptors
-]
-
-splitter = PropertyStratifiedSplitter(
-    properties=properties,
-    n_bins=4,  # Fewer bins for more properties
-    test_size=0.2,
-    random_state=42
-)
-
-X_train, X_test, y_train, y_test = splitter.split(X, y=y)
-```
-
-## Tips and Best Practices
-
-### Property Selection
-
-- Choose properties that reflect chemical diversity in your dataset
-- Common choices: LogP, MW, TPSA, polar surface area
-- Avoid properties with high correlation
-
-### Bin Configuration
-
-- **n_bins = 3-4**: Good for small datasets or many properties
-- **n_bins = 5-6**: Default, good balance
-- **n_bins > 6**: Use for large, diverse datasets
-
-### Validation
-
-Always validate your splits:
+## 6. Loading molecules from files
 
 ```python
-# Check distributions match
-metrics = calculate_distribution_metrics(X_train, X_test, y_train, y_test)
+from stratosampler import load_smiles, load_sdf
 
-# Inspect property distributions
-print(X_train[properties].describe())
-print(X_test[properties].describe())
+# From a plain SMILES file
+mols, data = load_smiles("compounds.smi")
+
+# From a CSV (SMILES in column 1, IDs in column 0)
+mols, data = load_smiles("compounds.csv", delimiter=",", smiles_column=1, id_column=0)
+
+# From an SDF with properties
+mols, data = load_sdf("compounds.sdf", include_properties=True)
+
+# data is a DataFrame — feed it straight into the splitter
+train_idx, test_idx = splitter.split(data, smiles_col="SMILES")
 ```

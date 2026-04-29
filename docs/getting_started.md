@@ -2,31 +2,33 @@
 
 ## Installation
 
-### Basic Installation
-
 ```bash
 pip install stratosampler
-```
-
-### With RDKit Support
-
-To compute molecular properties directly from SMILES, install the RDKit extra:
-
-```bash
+# with RDKit (required to compute properties from SMILES):
 pip install "stratosampler[rdkit]"
 ```
 
-### Development Installation
-
-For development and testing:
+For development:
 
 ```bash
 pip install -e ".[dev,rdkit]"
+pytest tests/ -v
 ```
 
-## Basic Usage
+---
 
-### 1. Create a Splitter
+## Basic usage
+
+### 1. Load your data
+
+```python
+import pandas as pd
+
+df = pd.read_csv("molecules.csv")
+# df must have a SMILES column, e.g. "SMILES"
+```
+
+### 2. Create a splitter
 
 ```python
 from stratosampler import PropertyStratifiedSplitter
@@ -35,91 +37,100 @@ splitter = PropertyStratifiedSplitter(
     properties=["MolLogP", "MolWt", "TPSA"],
     n_bins=5,
     test_size=0.2,
-    random_state=42
+    random_state=42,
 )
 ```
 
-### 2. Prepare Your Data
+### 3. Split
 
 ```python
-import pandas as pd
+# Returns integer index arrays into df
+train_idx, test_idx = splitter.split(df, smiles_col="SMILES")
 
-# Load your data
-df = pd.read_csv("molecules.csv")
-X = df[["SMILES", "activity"]]
-y = df["bioactivity"]
+train_df = df.iloc[train_idx]
+test_df  = df.iloc[test_idx]
 ```
 
-### 3. Perform the Split
+Or get DataFrames directly:
 
 ```python
-X_train, X_test, y_train, y_test = splitter.split(X, y=y)
+train_df, test_df = splitter.get_split_dataframes(df, smiles_col="SMILES")
 ```
 
-### 4. Validate the Split
+### 4. Validate the split
 
 ```python
-from stratosampler.metrics import calculate_distribution_metrics
+from stratosampler import split_summary, compute_properties
 
-metrics = calculate_distribution_metrics(X_train, X_test, y_train, y_test)
-print(metrics)
+props = ["MolLogP", "MolWt", "TPSA"]
+
+# Compute properties and add to DataFrame for metric functions
+prop_df = compute_properties(df["SMILES"], props)
+df = pd.concat([df, prop_df], axis=1)
+
+summary = split_summary(df, train_idx, test_idx, props)
+print(f"Mean KS statistic:  {summary['mean_ks_stat']:.3f}")   # lower = better
+print(f"Mean JS divergence: {summary['mean_js_div']:.3f}")    # lower = better
 ```
 
-## Configuration
+---
 
-### PropertyStratifiedSplitter Parameters
+## Split from pre-computed property columns
 
-- **properties** (list): Properties to stratify on
-- **n_bins** (int): Number of bins for stratification
-- **test_size** (float): Fraction of data for test set (default: 0.2)
-- **random_state** (int): Random seed for reproducibility
-
-## Common Patterns
-
-### Handling Missing Values
+If your DataFrame already has property columns, skip SMILES entirely:
 
 ```python
-# Drop rows with missing values
-X = X.dropna()
-
-# Or use fillna
-X = X.fillna(X.mean())
+train_idx, test_idx = splitter.split(df, property_cols=["logP", "MW", "TPSA"])
 ```
 
-### Cross-Validation
+---
+
+## Three-way split (train / val / test)
 
 ```python
-from stratosampler import PropertyStratifiedSplitter
-
-splitter = PropertyStratifiedSplitter(n_splits=5)
-
-for train_idx, test_idx in splitter.split(X):
-    X_train, X_test = X.iloc[train_idx], X.iloc[test_idx]
-    y_train, y_test = y.iloc[train_idx], y.iloc[test_idx]
-    # Train your model...
+splitter = PropertyStratifiedSplitter(
+    properties=["MolLogP", "MolWt", "TPSA"],
+    test_size=0.1,
+    val_size=0.1,
+    random_state=42,
+)
+train_idx, val_idx, test_idx = splitter.split(df, smiles_col="SMILES")
 ```
 
-## Troubleshooting
+---
 
-### Property Computation Issues
+## Scaffold-aware mode
 
-If molecular properties can't be computed from SMILES:
-
-1. Ensure RDKit is installed: `pip install rdkit`
-2. Check SMILES validity
-3. Verify property names match RDKit conventions
-
-### Memory Issues with Large Datasets
-
-For datasets with millions of molecules:
+Keeps molecules sharing a Murcko scaffold together in the same split,
+preventing analogue leakage while still preserving property distributions.
 
 ```python
-# Process in batches
-splitter = PropertyStratifiedSplitter(n_bins=10)
-X_train, X_test = splitter.split(X)
+splitter = PropertyStratifiedSplitter(
+    properties=["MolLogP", "MolWt", "TPSA"],
+    test_size=0.2,
+    scaffold_aware=True,
+    random_state=42,
+)
+train_idx, test_idx = splitter.split(df, smiles_col="SMILES")
 ```
 
-## Next Steps
+---
 
-- Check the [API Reference](api.md) for detailed documentation
-- Explore [Examples](examples.md) for more use cases
+## Built-in properties
+
+These names are computed automatically from SMILES strings:
+
+| Name | Description |
+|------|-------------|
+| `MolLogP` | Wildman-Crippen LogP |
+| `MolWt` | Molecular weight |
+| `TPSA` | Topological polar surface area |
+| `NumHDonors` | H-bond donors |
+| `NumHAcceptors` | H-bond acceptors |
+| `NumRotBonds` | Rotatable bonds |
+| `NumRings` | Total ring count |
+| `NumAromaticRings` | Aromatic ring count |
+| `FractionCSP3` | Fraction of sp3 carbons |
+| `NumHeavyAtoms` | Heavy atom count |
+
+Any valid `rdkit.Chem.Descriptors` attribute name also works.
