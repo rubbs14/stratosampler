@@ -7,7 +7,7 @@ name = "stratosampler"
 version = "0.1.0"
 description = "Stratified molecular dataset splitting for QSAR model development"
 readme = "README.md"
-license = { text = "MIT" }
+license = "MIT"
 authors = [{ name = "Roberto Fino", email = "roberto.fino84@gmail.com" }]
 keywords = [
     "cheminformatics", "QSAR", "drug discovery", "machine learning",
@@ -18,7 +18,6 @@ classifiers = [
     "Intended Audience :: Science/Research",
     "Topic :: Scientific/Engineering :: Chemistry",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
-    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
@@ -45,6 +44,7 @@ Issues     = "https://github.com/rubbs14/stratosampler/issues"
 
 [tool.setuptools.packages.find]
 where = ["."]
+exclude = ["tests*", "examples*", "notebooks*", "docs*"]
 
 [tool.black]
 line-length = 88
