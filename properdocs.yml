@@ -16,6 +16,7 @@ plugins:
 nav:
   - Home: index.md
   - Getting Started: getting_started.md
+  - StratoAgent: agent.md
   - API Reference: api.md
   - Examples: examples.md
 

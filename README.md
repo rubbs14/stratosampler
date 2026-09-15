@@ -71,6 +71,34 @@ train_df, test_df = splitter.get_split_dataframes(df, smiles_col="SMILES")
 
 ---
 
+## Or just ask it: StratoAgent
+
+Prefer natural language? `stratosampler chat` wraps the library as an
+LLM agent — local and free by default (via [Ollama](https://ollama.com)),
+no API key needed.
+
+```bash
+pip install "stratosampler[agent]"
+ollama pull llama3.2:3b
+
+stratosampler chat "load examples/egfr_stratified_sample.csv, smiles column is 'smiles'"
+stratosampler chat "split examples/egfr_stratified_sample.csv on pIC50, smiles col 'smiles', 20% test"
+stratosampler chat "compare random vs stratified vs scaffold-aware on that same file"
+```
+
+Or drop into the REPL and iterate:
+
+```bash
+$ stratosampler chat
+> split examples/egfr_stratified_sample.csv, smiles column 'smiles', properties pIC50 and MolWt, scaffold-aware
+> now visualize that split
+```
+
+See [docs/agent.md](docs/agent.md) for `stratosampler serve` (web UI + SSE
+API), the Groq backend for a bigger hosted model, and how to test your setup.
+
+---
+
 ## Scaffold-aware mode
 
 Prevents analogue leakage by keeping molecules sharing a Murcko scaffold
@@ -199,6 +227,9 @@ Issues and PRs welcome. Run the test suite with:
 pip install -e ".[dev]"
 pytest tests/ -v
 ```
+
+If you're using Claude Code, this repo ships skills under `.claude/skills/`
+that are picked up automatically — see [docs/agent.md](docs/agent.md#claude-code-skills).
 
 ---
 
