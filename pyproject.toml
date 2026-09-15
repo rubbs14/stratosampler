@@ -33,9 +33,18 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-rdkit = ["rdkit>=2022.03"]
-dev   = ["pytest", "pytest-cov", "black", "ruff", "jupyter"]
-docs  = ["properdocs>=1.6.0", "properdocs-theme-mkdocs>=1.6.0"]
+rdkit  = ["rdkit>=2022.03"]
+dev    = ["pytest", "pytest-cov", "black", "ruff", "jupyter"]
+docs   = ["properdocs>=1.6.0", "properdocs-theme-mkdocs>=1.6.0"]
+agent  = [
+    "openai>=1.30",
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.29",
+    "click>=8.0",
+]
+
+[project.scripts]
+stratosampler = "stratosampler.agent.cli:main"
 
 [project.urls]
 Homepage   = "https://github.com/rubbs14/stratosampler"
