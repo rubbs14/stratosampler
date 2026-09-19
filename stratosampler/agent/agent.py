@@ -1,5 +1,5 @@
 """
-StratoAgent — Groq-powered agent wrapping stratosampler tools.
+StratoAgent — LLM agent (Ollama or Groq) wrapping stratosampler tools.
 """
 
 from __future__ import annotations
@@ -108,11 +108,9 @@ class StratoAgent:
 
                 accumulated_text = ""
                 tool_call_chunks: dict[int, dict] = {}
-                finish_reason = None
 
                 for chunk in completion:
                     choice = chunk.choices[0]
-                    finish_reason = choice.finish_reason or finish_reason
                     delta = choice.delta
 
                     if delta.content:
@@ -140,7 +138,7 @@ class StratoAgent:
                 yield {"type": "error", "content": str(exc)}
                 return
 
-            if not tool_call_chunks or finish_reason == "stop":
+            if not tool_call_chunks:
                 self.history.append({"role": "assistant", "content": accumulated_text or ""})
                 yield {"type": "done"}
                 return
