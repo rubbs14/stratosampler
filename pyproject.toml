@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "stratosampler"
-version = "0.1.1"
+version = "0.2.0"
 description = "Stratified molecular dataset splitting for QSAR model development"
 readme = "README.md"
 license = "MIT"
@@ -30,6 +30,7 @@ dependencies = [
     "scikit-learn>=1.1",
     "scipy>=1.9",
     "matplotlib>=3.6",
+    "networkx>=2.8",
 ]
 
 [project.optional-dependencies]
@@ -54,6 +55,9 @@ Issues     = "https://github.com/rubbs14/stratosampler/issues"
 [tool.setuptools.packages.find]
 where = ["."]
 exclude = ["tests*", "examples*", "notebooks*", "docs*"]
+
+[tool.setuptools.package-data]
+"stratosampler.agent" = ["static/*.html"]
 
 [tool.black]
 line-length = 88
