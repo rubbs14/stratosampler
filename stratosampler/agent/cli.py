@@ -4,7 +4,18 @@ CLI entry point: `stratosampler chat` and `stratosampler serve`.
 
 from __future__ import annotations
 
+import ipaddress
+
 import click
+
+
+def _is_loopback(host: str) -> bool:
+    if host == "localhost":
+        return True
+    try:
+        return ipaddress.ip_address(host).is_loopback
+    except ValueError:
+        return False
 
 
 @click.group()
@@ -109,6 +120,15 @@ def serve(host: str, port: int, backend: str, model: str | None, reload: bool) -
         raise click.ClickException("uvicorn not installed. Run: pip install 'stratosampler[agent]'")
 
     from stratosampler.agent.server import create_app
+
+    if not _is_loopback(host):
+        click.secho(
+            f"WARNING: binding to {host} exposes StratoAgent beyond this machine. "
+            "It has no authentication, and its tools can read and write arbitrary "
+            "files on the host. Use 127.0.0.1 unless the network is trusted.",
+            fg="yellow",
+            err=True,
+        )
 
     app = create_app(model=model, backend=backend)
     click.echo(f"StratoAgent running at http://{host}:{port} (backend={backend})")
