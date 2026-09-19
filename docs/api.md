@@ -223,3 +223,121 @@ Class-based loaders for fine-grained control:
 loader = SmilesLoader(raise_on_invalid=False)
 mols, data = loader.load("compounds.csv", delimiter=",", smiles_column=1)
 ```
+
+---
+
+## MCS (Maximum Common Substructure)
+
+Requires RDKit and `networkx`. Not re-exported at the top level; import from `stratosampler.mcs`:
+
+```python
+from stratosampler.mcs import compare_configs, PRESETS, MCSConfig
+```
+
+---
+
+### `compare_configs(mols, mol_names=None, configs=None)`
+
+Run MCS once per config on a list of RDKit molecules and return a comparison DataFrame. `configs` defaults to every entry in `PRESETS`.
+
+```python
+from rdkit import Chem
+from stratosampler.mcs import compare_configs, PRESETS
+
+mols = [Chem.MolFromSmiles(s) for s in ["c1ccccc1CC(=O)O", "c1ccccc1CCN", "c1ccccc1CCO"]]
+df = compare_configs(mols, configs=[PRESETS["strict"], PRESETS["align_strict"]])
+```
+
+**Returns** a `pd.DataFrame` with columns:
+
+| Column | Description |
+|--------|-------------|
+| `config`, `description` | Config name and human-readable description |
+| `mcs_size` | Number of atoms in the MCS |
+| `mol_sizes` | Heavy-atom count per molecule (after Murcko reduction, if the config uses it) |
+| `min_mol_size` | Smallest molecule size (the denominator for `coverage`) |
+| `coverage` | `mcs_size / min_mol_size` |
+| `jaccard` | `mcs_size / (sum(mol_sizes) - (n_mols - 1) * mcs_size)` |
+| `approximate` | `True` if a clique step fell back to a greedy approximation (large, dense graphs) |
+| `mapping` | Per-molecule atom index lists for the MCS |
+
+---
+
+### `PRESETS`
+
+Dict of named `MCSConfig` objects:
+
+| Preset | Matching |
+|--------|----------|
+| `strict` | Exact element + exact bond order |
+| `element_only` | Exact element, ignore bond order |
+| `aromatic` | Element + aromaticity, exact bond order |
+| `full_atom` | Element + aromaticity + charge, exact bond order |
+| `heavy_atom` | Any heavy atom, ignore bond order (maximum topology overlap) |
+| `ring_aware` | Exact element + bond order, ring membership must agree |
+| `murcko_strict`, `murcko_element`, `murcko_heavy` | The `strict`, `element_only` and `heavy_atom` matching applied to Murcko scaffolds |
+| `align_strict`, `align_element`, `align_murcko` | Largest **connected** MCS using RDKit's C++ engine, for 3D alignment |
+
+---
+
+### `MCSConfig`
+
+Dataclass describing one matching strategy: `name`, `atom_compat`, `bond_compat`, `use_murcko=False`, `connected=False`, `use_rdkit_fmcs=False`, `description=""`. Build your own to pass to `compare_configs`.
+
+---
+
+### `find_mcs_iterative(mols, atom_compat, bond_compat)` / `find_mcs_pair(G1, G2, atom_compat, bond_compat)` / `find_mcs_rdkit(mols, atom_compare="exact", bond_compare="strict", ring_matches_ring_only=True, complete_rings_only=False, timeout=10)`
+
+Lower-level building blocks. `find_mcs_iterative` finds the MCS across two or more molecules and `find_mcs_rdkit` uses RDKit's `FindMCS`; both return one list of MCS atom indices per molecule. `find_mcs_pair` works on two `networkx` graphs from `mol_to_graph` and returns `(idx_G1, idx_G2)` pairs.
+
+---
+
+## Agent (StratoAgent)
+
+Requires the `agent` extra: `pip install "stratosampler[agent,rdkit]"`. For the CLI, web server and configuration, see [StratoAgent](agent.md).
+
+```python
+from stratosampler.agent import StratoAgent
+```
+
+---
+
+### `StratoAgent(backend="ollama", model=None, api_key=None, max_tokens=4096, max_tool_rounds=8)`
+
+Stateful agent that keeps conversation history and calls stratosampler's tools.
+
+| Parameter | Description |
+|-----------|-------------|
+| `backend` | `"ollama"` (local, default) or `"groq"` (hosted, needs `GROQ_API_KEY`) |
+| `model` | Model ID. Defaults to `llama3.2:3b` (Ollama) or `llama-3.3-70b-versatile` (Groq) |
+| `api_key` | Groq API key. Ignored for Ollama; falls back to the `GROQ_API_KEY` env var |
+| `max_tokens` | Max tokens per response turn |
+| `max_tool_rounds` | Max consecutive rounds of tool calls per message before the agent stops with an error |
+
+Raises `ValueError` for an unknown backend, or for `backend="groq"` with no key.
+
+---
+
+### `StratoAgent.stream(message)`
+
+Generator over one user message. Yields dicts:
+
+| `type` | Extra keys |
+|--------|------------|
+| `text` | `content`: a chunk of the reply |
+| `tool_call` | `name`, `input`: a tool about to run |
+| `tool_result` | `name`: the tool finished |
+| `pdb_viewer` | `pdb_ids`, `structures`: from `fetch_pdb_structures` |
+| `done` | Reply finished |
+| `error` | `content`: what went wrong |
+
+```python
+agent = StratoAgent()
+for event in agent.stream("load examples/egfr_stratified_sample.csv, smiles column is 'smiles'"):
+    if event["type"] == "text":
+        print(event["content"], end="")
+```
+
+### `StratoAgent.reset()`
+
+Clear the conversation history.

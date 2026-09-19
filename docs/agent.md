@@ -65,6 +65,10 @@ from [console.groq.com](https://console.groq.com):
 export GROQ_API_KEY="gsk_..."
 ```
 
+> **Groq backend status:** implemented, and its configuration logic is unit-tested,
+> but it has not been tested against the live Groq API. The Ollama backend is the
+> one verified end to end.
+
 Any model your backend hosts with tool-calling support can be passed via
 `--model` — e.g. `qwen2.5:7b-instruct` for Ollama, or
 `llama-3.1-8b-instant` for Groq.
@@ -249,9 +253,11 @@ traceback if `agent` extras weren't installed.
 running, or the model hasn't been pulled. Run `ollama serve` in another
 terminal and `ollama pull llama3.2:3b` (or your `--model` choice) first.
 
-**Agent errors immediately with an auth-related message on `--backend
-groq`** — `GROQ_API_KEY` is missing or invalid. Check `echo $GROQ_API_KEY`,
-or pass `--api-key` explicitly to `chat`.
+**`GROQ_API_KEY not set` on `--backend groq`** — `serve` and `chat` exit at
+startup with this error when no key is available. Check `echo $GROQ_API_KEY`,
+or pass `--api-key` explicitly to `chat` (`serve` reads only the environment
+variable). A key that is set but invalid is only rejected by Groq on the first
+request.
 
 **Split/property tools fail on valid-looking SMILES** — make sure `rdkit`
 is installed (`pip install "stratosampler[rdkit]"`); most tools import it

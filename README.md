@@ -95,7 +95,7 @@ $ stratosampler chat
 ```
 
 See [docs/agent.md](https://github.com/rubbs14/stratosampler/blob/main/docs/agent.md) for `stratosampler serve` (web UI + SSE
-API), the Groq backend for a bigger hosted model, and how to test your setup.
+API), the Groq backend for a bigger hosted model (not yet tested against the live Groq API), and how to test your setup.
 
 ---
 
