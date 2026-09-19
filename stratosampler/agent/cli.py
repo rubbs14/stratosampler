@@ -120,7 +120,13 @@ def serve(host: str, port: int, backend: str, model: str | None, reload: bool) -
     except ImportError:
         raise click.ClickException("uvicorn not installed. Run: pip install 'stratosampler[agent]'")
 
+    from stratosampler.agent.agent import _resolve_backend
     from stratosampler.agent.server import create_app
+
+    try:
+        _resolve_backend(backend, model, None)
+    except ValueError as exc:
+        raise click.ClickException(str(exc))
 
     if not _is_loopback(host):
         click.secho(

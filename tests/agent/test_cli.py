@@ -54,8 +54,9 @@ def test_no_warning_on_loopback(uvicorn_calls, host):
     assert uvicorn_calls[0]["host"] == host
 
 
-def test_reload_passes_an_import_string_factory(uvicorn_calls, clean_env):
+def test_reload_passes_an_import_string_factory(uvicorn_calls, clean_env, monkeypatch):
     """uvicorn can only reload an import string, not an app object."""
+    monkeypatch.setenv("GROQ_API_KEY", "gsk_test")
     result = _serve("--reload", "--backend", "groq", "--model", "some-model")
 
     assert result.exit_code == 0
@@ -81,3 +82,42 @@ def test_without_reload_passes_the_app_object(uvicorn_calls):
     assert not isinstance(call["app"], str)
     assert call["reload"] is False
     assert "factory" not in call
+
+
+def test_groq_without_key_fails_at_startup(uvicorn_calls, monkeypatch):
+    """Fail fast instead of starting a server whose every /chat returns a 500."""
+    monkeypatch.delenv("GROQ_API_KEY", raising=False)
+
+    result = _serve("--backend", "groq")
+
+    assert result.exit_code != 0
+    assert "GROQ_API_KEY" in result.output
+    assert uvicorn_calls == []
+
+
+def test_groq_without_key_fails_at_startup_with_reload(uvicorn_calls, clean_env, monkeypatch):
+    monkeypatch.delenv("GROQ_API_KEY", raising=False)
+
+    result = _serve("--backend", "groq", "--reload")
+
+    assert result.exit_code != 0
+    assert "GROQ_API_KEY" in result.output
+    assert uvicorn_calls == []
+
+
+def test_groq_with_key_starts(uvicorn_calls, monkeypatch):
+    monkeypatch.setenv("GROQ_API_KEY", "gsk_test")
+
+    result = _serve("--backend", "groq")
+
+    assert result.exit_code == 0
+    assert len(uvicorn_calls) == 1
+
+
+def test_ollama_needs_no_key(uvicorn_calls, monkeypatch):
+    monkeypatch.delenv("GROQ_API_KEY", raising=False)
+
+    result = _serve()
+
+    assert result.exit_code == 0
+    assert len(uvicorn_calls) == 1

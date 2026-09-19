@@ -226,12 +226,17 @@ when it detects a connection failure.
 
 ### No / bad GROQ_API_KEY (only relevant to `--backend groq`)
 
-`StratoAgent.__init__` raises `ValueError: GROQ_API_KEY not set and no
-api_key provided for backend='groq'` immediately at construction if
-neither `GROQ_API_KEY` nor `--api-key` is set — before any chat turn is
-attempted. Confirm the key is visible in the same shell/process that runs
-`stratosampler`: `echo $GROQ_API_KEY`. This check does not apply to
+With `--backend groq`, `stratosampler chat` and `stratosampler serve` exit at
+startup with `GROQ_API_KEY not set and no api_key provided for
+backend='groq'` if neither `GROQ_API_KEY` nor (for `chat` only) `--api-key`
+is set. Confirm the key is visible in the same shell/process that runs
+`stratosampler`: `echo $GROQ_API_KEY`. A key that is set but invalid is only
+rejected by Groq on the first request. This check does not apply to
 `--backend ollama` at all.
+
+The Groq backend is implemented (its configuration logic is unit-tested) but
+has **not** been tested against the live Groq API; don't claim it works end to end. Ollama is the
+verified backend.
 
 ### A long-lived session "forgets" everything
 
