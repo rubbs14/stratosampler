@@ -53,6 +53,7 @@ flags or environment variables.
 | Model | `--model` | `llama3.2:3b` (ollama) / `llama-3.3-70b-versatile` (groq) |
 | Groq API key | `GROQ_API_KEY` env var, or `--api-key` (chat only) | — (required only for `--backend groq`) |
 | Max response tokens | `StratoAgent(max_tokens=...)` (Python API only) | `4096` |
+| Max tool-call rounds | `StratoAgent(max_tool_rounds=...)` (Python API only) | `8` |
 | Server host/port | `--host` / `--port` (serve only) | `127.0.0.1` / `8000` |
 | Session idle TTL | hardcoded `_SESSION_TTL_SECONDS` in `agent/server.py` | `1800` (30 min) |
 
@@ -111,6 +112,11 @@ stratosampler serve --backend groq --port 8080  # hosted, needs GROQ_API_KEY
 Serves a small web UI at `http://127.0.0.1:8080/` and a streaming chat API
 at `POST /chat` (Server-Sent Events). `--reload` auto-restarts on code
 changes during development.
+
+**Security:** the server has no authentication, and the agent's tools can read and
+write arbitrary files on the host (`load_data`, `split_dataset`, `visualize_split`).
+Keep the default `--host 127.0.0.1`. Binding to `0.0.0.0` or any non-loopback
+address prints a warning, because anyone who can reach the port can use those tools.
 
 Talking to the API directly:
 

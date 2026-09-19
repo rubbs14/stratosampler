@@ -1,5 +1,5 @@
 """
-StratoAgent — Groq-powered agent wrapping stratosampler tools.
+StratoAgent — LLM agent (Ollama or Groq) wrapping stratosampler tools.
 """
 
 from __future__ import annotations
@@ -62,6 +62,9 @@ class StratoAgent:
         API key. Ignored for Ollama. Falls back to GROQ_API_KEY env var for Groq.
     max_tokens : int
         Max tokens per response turn.
+    max_tool_rounds : int
+        Max consecutive rounds of tool calls per message. Stops a model that
+        keeps calling tools without ever answering.
     """
 
     def __init__(
@@ -70,6 +73,7 @@ class StratoAgent:
         model: str | None = None,
         api_key: str | None = None,
         max_tokens: int = 4096,
+        max_tool_rounds: int = 8,
     ):
         from openai import OpenAI
 
@@ -78,6 +82,7 @@ class StratoAgent:
         self.backend = backend
         self.model = resolved_model
         self.max_tokens = max_tokens
+        self.max_tool_rounds = max_tool_rounds
         self.history: list[dict] = []
 
     def reset(self) -> None:
@@ -94,6 +99,7 @@ class StratoAgent:
         {"type": "error",       "content": str}
         """
         self.history.append({"role": "user", "content": message})
+        tool_rounds = 0
 
         while True:
             try:
@@ -108,11 +114,9 @@ class StratoAgent:
 
                 accumulated_text = ""
                 tool_call_chunks: dict[int, dict] = {}
-                finish_reason = None
 
                 for chunk in completion:
                     choice = chunk.choices[0]
-                    finish_reason = choice.finish_reason or finish_reason
                     delta = choice.delta
 
                     if delta.content:
@@ -140,10 +144,21 @@ class StratoAgent:
                 yield {"type": "error", "content": str(exc)}
                 return
 
-            if not tool_call_chunks or finish_reason == "stop":
+            if not tool_call_chunks:
                 self.history.append({"role": "assistant", "content": accumulated_text or ""})
                 yield {"type": "done"}
                 return
+
+            if tool_rounds >= self.max_tool_rounds:
+                yield {
+                    "type": "error",
+                    "content": (
+                        f"Stopped after {self.max_tool_rounds} rounds of tool calls "
+                        "without a final answer."
+                    ),
+                }
+                return
+            tool_rounds += 1
 
             # Tool calls — add assistant turn then execute each tool
             tool_calls = [tool_call_chunks[i] for i in sorted(tool_call_chunks)]
