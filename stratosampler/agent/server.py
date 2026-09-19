@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 import threading
 import time
 import uuid
@@ -93,3 +94,11 @@ def create_app(model: str | None = None, backend: str = "ollama") -> FastAPI:
         return {"ok": True}
 
     return app
+
+
+def create_app_from_env() -> FastAPI:
+    """Import-string factory for `serve --reload` (the reloader can't take an app object)."""
+    return create_app(
+        model=os.environ.get("STRATOSAMPLER_MODEL") or None,
+        backend=os.environ.get("STRATOSAMPLER_BACKEND", "ollama"),
+    )

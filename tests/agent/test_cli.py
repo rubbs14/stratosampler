@@ -4,6 +4,8 @@ Tests for `stratosampler serve` host handling.
 uvicorn.run is patched out, so no server is started and no network is used.
 """
 
+import os
+
 import pytest
 
 pytest.importorskip("uvicorn")
@@ -19,8 +21,15 @@ def uvicorn_calls(monkeypatch):
     import uvicorn
 
     calls = []
-    monkeypatch.setattr(uvicorn, "run", lambda app, **kwargs: calls.append(kwargs))
+    monkeypatch.setattr(uvicorn, "run", lambda app, **kwargs: calls.append({"app": app, **kwargs}))
     return calls
+
+
+@pytest.fixture
+def clean_env(monkeypatch):
+    # setenv first so monkeypatch restores/removes them after the CLI mutates os.environ
+    monkeypatch.setenv("STRATOSAMPLER_BACKEND", "placeholder")
+    monkeypatch.setenv("STRATOSAMPLER_MODEL", "placeholder")
 
 
 def _serve(*args):
@@ -43,3 +52,32 @@ def test_no_warning_on_loopback(uvicorn_calls, host):
     assert result.exit_code == 0
     assert "authentication" not in result.output.lower()
     assert uvicorn_calls[0]["host"] == host
+
+
+def test_reload_passes_an_import_string_factory(uvicorn_calls, clean_env):
+    """uvicorn can only reload an import string, not an app object."""
+    result = _serve("--reload", "--backend", "groq", "--model", "some-model")
+
+    assert result.exit_code == 0
+    call = uvicorn_calls[0]
+    assert call["app"] == "stratosampler.agent.server:create_app_from_env"
+    assert call["factory"] is True
+    assert call["reload"] is True
+    assert os.environ["STRATOSAMPLER_BACKEND"] == "groq"
+    assert os.environ["STRATOSAMPLER_MODEL"] == "some-model"
+
+
+def test_reload_without_model_clears_model_env(uvicorn_calls, clean_env):
+    _serve("--reload")
+
+    assert os.environ["STRATOSAMPLER_BACKEND"] == "ollama"
+    assert "STRATOSAMPLER_MODEL" not in os.environ
+
+
+def test_without_reload_passes_the_app_object(uvicorn_calls):
+    _serve()
+
+    call = uvicorn_calls[0]
+    assert not isinstance(call["app"], str)
+    assert call["reload"] is False
+    assert "factory" not in call

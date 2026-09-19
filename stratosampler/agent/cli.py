@@ -5,6 +5,7 @@ CLI entry point: `stratosampler chat` and `stratosampler serve`.
 from __future__ import annotations
 
 import ipaddress
+import os
 
 import click
 
@@ -130,6 +131,23 @@ def serve(host: str, port: int, backend: str, model: str | None, reload: bool) -
             err=True,
         )
 
-    app = create_app(model=model, backend=backend)
     click.echo(f"StratoAgent running at http://{host}:{port} (backend={backend})")
-    uvicorn.run(app, host=host, port=port, reload=reload)
+
+    if reload:
+        # uvicorn reloads by re-importing an import string, so hand it the
+        # settings through the environment instead of an app object.
+        os.environ["STRATOSAMPLER_BACKEND"] = backend
+        if model:
+            os.environ["STRATOSAMPLER_MODEL"] = model
+        else:
+            os.environ.pop("STRATOSAMPLER_MODEL", None)
+        uvicorn.run(
+            "stratosampler.agent.server:create_app_from_env",
+            factory=True,
+            host=host,
+            port=port,
+            reload=True,
+        )
+        return
+
+    uvicorn.run(create_app(model=model, backend=backend), host=host, port=port, reload=False)
