@@ -19,7 +19,7 @@ The base `stratosampler` install does **not** pull in the `openai` client
 `agent` extras group in `pyproject.toml`:
 
 ```bash
-pip install -e '.[agent]'
+pip install -e '.[agent,rdkit]'
 ```
 
 Quote the extras (`'.[agent]'`) — an unquoted `.[agent]` gets glob-expanded by

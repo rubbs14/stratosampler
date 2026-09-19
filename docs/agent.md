@@ -17,7 +17,7 @@ burns through that quota fast. Ollama has no such limit.
 ## Installation
 
 ```bash
-pip install "stratosampler[agent]"
+pip install "stratosampler[agent,rdkit]"
 ```
 
 This pulls in the extra dependencies the agent needs on top of the base
@@ -181,9 +181,9 @@ stratosampler chat --backend groq "load examples/egfr_stratified_sample.csv, smi
 | `find_mcs` | Maximum Common Substructure across a list of SMILES |
 | `fetch_pdb_structures` | Look up 3D structures for a protein target on RCSB PDB |
 
-See [`stratosampler-split`](../.claude/skills/stratosampler-split/SKILL.md),
-[`stratosampler-mcs`](../.claude/skills/stratosampler-mcs/SKILL.md), and
-[`stratosampler-agent-ops`](../.claude/skills/stratosampler-agent-ops/SKILL.md)
+See [`stratosampler-split`](https://github.com/rubbs14/stratosampler/blob/main/.claude/skills/stratosampler-split/SKILL.md),
+[`stratosampler-mcs`](https://github.com/rubbs14/stratosampler/blob/main/.claude/skills/stratosampler-mcs/SKILL.md), and
+[`stratosampler-agent-ops`](https://github.com/rubbs14/stratosampler/blob/main/.claude/skills/stratosampler-agent-ops/SKILL.md)
 for detailed workflows if you're using Claude Code against this repo.
 
 ---
