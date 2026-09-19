@@ -30,7 +30,7 @@ jobs:
           python-version: "3.11"
 
       - name: Install UV
-        uses: astral-sh/setup-uv@v10
+        uses: astral-sh/setup-uv@v10.1.0
         with:
           version: "latest"
 
