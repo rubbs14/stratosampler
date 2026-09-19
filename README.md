@@ -4,8 +4,8 @@
 
 **Stratified molecular dataset splitting for QSAR model development.**
 
-[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://github.com/rubbs14/stratosampler/blob/main/LICENSE)
 [![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)]()
 
 ---
@@ -78,7 +78,7 @@ LLM agent — local and free by default (via [Ollama](https://ollama.com)),
 no API key needed.
 
 ```bash
-pip install "stratosampler[agent]"
+pip install "stratosampler[agent,rdkit]"
 ollama pull llama3.2:3b
 
 stratosampler chat "load examples/egfr_stratified_sample.csv, smiles column is 'smiles'"
@@ -94,7 +94,7 @@ $ stratosampler chat
 > now visualize that split
 ```
 
-See [docs/agent.md](docs/agent.md) for `stratosampler serve` (web UI + SSE
+See [docs/agent.md](https://github.com/rubbs14/stratosampler/blob/main/docs/agent.md) for `stratosampler serve` (web UI + SSE
 API), the Groq backend for a bigger hosted model, and how to test your setup.
 
 ---
@@ -229,13 +229,13 @@ pytest tests/ -v
 ```
 
 If you're using Claude Code, this repo ships skills under `.claude/skills/`
-that are picked up automatically — see [docs/agent.md](docs/agent.md#claude-code-skills).
+that are picked up automatically — see [docs/agent.md](https://github.com/rubbs14/stratosampler/blob/main/docs/agent.md#claude-code-skills).
 
 ---
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+MIT. See [LICENSE](https://github.com/rubbs14/stratosampler/blob/main/LICENSE).
 
 ---
 

@@ -29,9 +29,8 @@ class TestSmilesLoader:
 
     @pytest.fixture
     def csv_smiles_file(self):
-        """Create a temporary CSV file with SMILES."""
+        """Create a headerless temporary CSV file (SmilesLoader is index-based)."""
         with tempfile.NamedTemporaryFile(mode="w", suffix=".csv", delete=False) as f:
-            f.write("mol_id,smiles,activity\n")
             f.write("mol_1,CCO,0.5\n")
             f.write("mol_2,CC(=O)O,0.8\n")
             f.write("mol_3,c1ccccc1,0.9\n")
@@ -58,7 +57,10 @@ class TestSmilesLoader:
         )
 
         assert len(mols) == 3
-        assert "smiles" in data.columns or "activity" in data.columns
+        # Loader is headerless: keep_properties=True returns raw positional columns
+        assert list(data.columns) == [0, 1, 2]
+        assert data[0].tolist() == ["mol_1", "mol_2", "mol_3"]
+        assert data[2].tolist() == [0.5, 0.8, 0.9]
 
     def test_invalid_smiles_handling(self):
         """Test handling of invalid SMILES strings."""
