@@ -53,10 +53,17 @@ def tool_calls(monkeypatch):
     return calls
 
 
-def make_agent(*responses):
-    agent = StratoAgent(backend="ollama")
+def make_agent(*responses, **agent_kwargs):
+    agent = StratoAgent(backend="ollama", **agent_kwargs)
     agent.client = FakeClient(responses)
     return agent
+
+
+def tool_round(call_id="c"):
+    return [
+        chunk(tool_calls=[tool_delta(0, id=call_id, name="load_data", args='{"path": "a.csv"}')]),
+        chunk(finish="tool_calls"),
+    ]
 
 
 def test_plain_text_response():
@@ -197,3 +204,27 @@ def test_reset_clears_history():
     agent.reset()
 
     assert agent.history == []
+
+
+def test_stops_when_model_keeps_calling_tools(tool_calls):
+    """A model stuck in a tool loop must be cut off, not run forever."""
+    agent = make_agent(*[tool_round(f"c{i}") for i in range(5)], max_tool_rounds=2)
+
+    events = list(agent.stream("go"))
+
+    assert len(tool_calls) == 2
+    assert events[-1]["type"] == "error"
+    assert "2" in events[-1]["content"] and "tool" in events[-1]["content"].lower()
+    assert agent.history[-1]["role"] == "tool"  # no dangling assistant tool_calls
+
+
+def test_default_limit_allows_normal_multistep_work(tool_calls):
+    agent = make_agent(
+        tool_round("c0"), tool_round("c1"), tool_round("c2"),
+        [chunk("All done"), chunk(finish="stop")],
+    )
+
+    events = list(agent.stream("go"))
+
+    assert len(tool_calls) == 3
+    assert events[-1] == {"type": "done"}

@@ -53,6 +53,7 @@ flags or environment variables.
 | Model | `--model` | `llama3.2:3b` (ollama) / `llama-3.3-70b-versatile` (groq) |
 | Groq API key | `GROQ_API_KEY` env var, or `--api-key` (chat only) | — (required only for `--backend groq`) |
 | Max response tokens | `StratoAgent(max_tokens=...)` (Python API only) | `4096` |
+| Max tool-call rounds | `StratoAgent(max_tool_rounds=...)` (Python API only) | `8` |
 | Server host/port | `--host` / `--port` (serve only) | `127.0.0.1` / `8000` |
 | Session idle TTL | hardcoded `_SESSION_TTL_SECONDS` in `agent/server.py` | `1800` (30 min) |
 

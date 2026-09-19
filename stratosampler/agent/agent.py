@@ -62,6 +62,9 @@ class StratoAgent:
         API key. Ignored for Ollama. Falls back to GROQ_API_KEY env var for Groq.
     max_tokens : int
         Max tokens per response turn.
+    max_tool_rounds : int
+        Max consecutive rounds of tool calls per message. Stops a model that
+        keeps calling tools without ever answering.
     """
 
     def __init__(
@@ -70,6 +73,7 @@ class StratoAgent:
         model: str | None = None,
         api_key: str | None = None,
         max_tokens: int = 4096,
+        max_tool_rounds: int = 8,
     ):
         from openai import OpenAI
 
@@ -78,6 +82,7 @@ class StratoAgent:
         self.backend = backend
         self.model = resolved_model
         self.max_tokens = max_tokens
+        self.max_tool_rounds = max_tool_rounds
         self.history: list[dict] = []
 
     def reset(self) -> None:
@@ -94,6 +99,7 @@ class StratoAgent:
         {"type": "error",       "content": str}
         """
         self.history.append({"role": "user", "content": message})
+        tool_rounds = 0
 
         while True:
             try:
@@ -142,6 +148,17 @@ class StratoAgent:
                 self.history.append({"role": "assistant", "content": accumulated_text or ""})
                 yield {"type": "done"}
                 return
+
+            if tool_rounds >= self.max_tool_rounds:
+                yield {
+                    "type": "error",
+                    "content": (
+                        f"Stopped after {self.max_tool_rounds} rounds of tool calls "
+                        "without a final answer."
+                    ),
+                }
+                return
+            tool_rounds += 1
 
             # Tool calls — add assistant turn then execute each tool
             tool_calls = [tool_call_chunks[i] for i in sorted(tool_call_chunks)]
