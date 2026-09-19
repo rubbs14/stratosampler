@@ -6,7 +6,7 @@
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://github.com/rubbs14/stratosampler/blob/main/LICENSE)
-[![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)]()
+[![Tests](https://github.com/rubbs14/stratosampler/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/rubbs14/stratosampler/actions/workflows/tests.yml)
 
 ---
 

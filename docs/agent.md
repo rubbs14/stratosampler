@@ -112,6 +112,11 @@ Serves a small web UI at `http://127.0.0.1:8080/` and a streaming chat API
 at `POST /chat` (Server-Sent Events). `--reload` auto-restarts on code
 changes during development.
 
+**Security:** the server has no authentication, and the agent's tools can read and
+write arbitrary files on the host (`load_data`, `split_dataset`, `visualize_split`).
+Keep the default `--host 127.0.0.1`. Binding to `0.0.0.0` or any non-loopback
+address prints a warning, because anyone who can reach the port can use those tools.
+
 Talking to the API directly:
 
 ```bash

@@ -104,6 +104,10 @@ stratosampler serve --backend groq --model llama-3.3-70b-versatile     # hosted,
 - The server also serves a minimal built-in web UI at `GET /` — open
   `http://127.0.0.1:8000/` in a browser for a point-and-click chat window
   instead of curl/Python.
+- The server has **no authentication** and its tools read/write arbitrary host
+  paths. Keep `--host 127.0.0.1`; `serve` prints a warning for any non-loopback
+  host (e.g. `0.0.0.0`) — don't suggest exposing it without a trusted network
+  or a reverse proxy providing auth.
 - `/docs` and `/redoc` are intentionally disabled (`docs_url=None`,
   `redoc_url=None` in `create_app`), so don't expect Swagger UI there.
 - Conversations live in an **in-memory** `dict` inside the server process —
